@@ -1,0 +1,496 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="text-center">Video Call - Room: {{ room_name }}</h3>
+                    <p class="text-center text-muted">Your username: {{ username }}</p>
+                </div>
+                <div class="card-body">
+                    <div class="video-container">
+                        <div class="video-wrapper">
+                            <video id="localVideo" autoplay playsinline muted></video>
+                            <div class="video-label">Your Video</div>
+                        </div>
+                        <div class="video-wrapper">
+                            <video id="remoteVideo" autoplay playsinline></video>
+                            <div class="video-label">Remote Video</div>
+                        </div>
+                    </div>
+                    <div class="device-selection mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="videoSource">Video Source:</label>
+                                <select id="videoSource" class="form-control"></select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="audioSource">Audio Source:</label>
+                                <select id="audioSource" class="form-control"></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="controls mt-3 text-center">
+                        <button id="startButton" class="btn btn-primary">Start Call</button>
+                        <button id="endButton" class="btn btn-danger" disabled>End Call</button>
+                        <button id="toggleVideo" class="btn btn-info">Toggle Video</button>
+                        <button id="toggleAudio" class="btn btn-info">Toggle Audio</button>
+                    </div>
+                    <div id="connectionStatus" class="mt-3 text-center"></div>
+                    <div id="debugInfo" class="mt-3 text-center small text-muted"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.video-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.video-wrapper {
+    position: relative;
+}
+
+video {
+    width: 400px;
+    height: 300px;
+    background-color: #000;
+    border-radius: 8px;
+}
+
+.video-label {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+    background-color: rgba(0, 0, 0, 0.5);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 10px;
+}
+
+#connectionStatus {
+    color: #666;
+    font-style: italic;
+}
+
+#debugInfo {
+    max-height: 100px;
+    overflow-y: auto;
+    text-align: left;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.device-selection {
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+}
+
+.device-selection select {
+    margin-bottom: 10px;
+}
+</style>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    const connectionStatus = document.getElementById('connectionStatus');
+    const debugInfo = document.getElementById('debugInfo');
+    const videoSourceSelect = document.getElementById('videoSource');
+    const audioSourceSelect = document.getElementById('audioSource');
+
+    const roomName = "{{ room_name }}";
+    const username = "{{ username }}";
+    const ws_scheme = window.location.protocol === "https:" ? "wss" : "ws";
+    let videoCallSocket = null;
+    let reconnectAttempts = 0;
+    const maxReconnectAttempts = 5;
+    const reconnectDelay = 2000; // 2 seconds
+
+    let localStream;
+    let peerConnection;
+    let isInitiator = false;
+    let isStarted = false;
+    let isChannelReady = false;
+
+    const configuration = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' },
+            { urls: 'stun:stun2.l.google.com:19302' },
+            { urls: 'stun:stun3.l.google.com:19302' },
+            { urls: 'stun:stun4.l.google.com:19302' }
+        ]
+    };
+
+    const localVideo = document.getElementById('localVideo');
+    const remoteVideo = document.getElementById('remoteVideo');
+    const startButton = document.getElementById('startButton');
+    const endButton = document.getElementById('endButton');
+    const toggleVideoButton = document.getElementById('toggleVideo');
+    const toggleAudioButton = document.getElementById('toggleAudio');
+
+    // Get available media devices
+    async function getMediaDevices() {
+        try {
+            const devices = await navigator.mediaDevices.enumerateDevices();
+            const videoDevices = devices.filter(device => device.kind === 'videoinput');
+            const audioDevices = devices.filter(device => device.kind === 'audioinput');
+
+            // Populate video source select
+            videoSourceSelect.innerHTML = videoDevices.map(device => 
+                `<option value="${device.deviceId}">${device.label || `Camera ${videoSourceSelect.length + 1}`}</option>`
+            ).join('');
+
+            // Populate audio source select
+            audioSourceSelect.innerHTML = audioDevices.map(device => 
+                `<option value="${device.deviceId}">${device.label || `Microphone ${audioSourceSelect.length + 1}`}</option>`
+            ).join('');
+
+            logDebug(`Found ${videoDevices.length} video devices and ${audioDevices.length} audio devices`);
+        } catch (error) {
+            logDebug('Error getting media devices: ' + error.message);
+        }
+    }
+
+    function logDebug(message) {
+        const timestamp = new Date().toLocaleTimeString();
+        debugInfo.innerHTML += `<div>[${timestamp}] ${message}</div>`;
+        debugInfo.scrollTop = debugInfo.scrollHeight;
+        console.log(message);
+    }
+
+    function connectWebSocket() {
+        if (videoCallSocket && videoCallSocket.readyState === WebSocket.OPEN) {
+            return;
+        }
+
+        const wsUrl = ws_scheme + '://' + window.location.host + '/ws/video_call/' + roomName + '/';
+        logDebug('Attempting to connect to WebSocket: ' + wsUrl);
+
+        try {
+            videoCallSocket = new WebSocket(wsUrl);
+
+            videoCallSocket.onopen = function(e) {
+                logDebug('WebSocket connection established');
+                connectionStatus.textContent = 'Connected to server';
+                connectionStatus.style.color = 'green';
+                reconnectAttempts = 0;
+            };
+
+            videoCallSocket.onclose = function(e) {
+                logDebug('WebSocket connection closed with code: ' + e.code + ', reason: ' + e.reason);
+                connectionStatus.textContent = 'Disconnected from server';
+                connectionStatus.style.color = 'red';
+                
+                if (reconnectAttempts < maxReconnectAttempts) {
+                    logDebug(`Attempting to reconnect (${reconnectAttempts + 1}/${maxReconnectAttempts})...`);
+                    setTimeout(connectWebSocket, reconnectDelay);
+                    reconnectAttempts++;
+                } else {
+                    logDebug('Max reconnection attempts reached');
+                    connectionStatus.textContent = 'Connection failed. Please refresh the page.';
+                }
+            };
+
+            videoCallSocket.onerror = function(e) {
+                logDebug('WebSocket error: ' + JSON.stringify(e));
+                connectionStatus.textContent = 'Connection error';
+                connectionStatus.style.color = 'red';
+            };
+
+            videoCallSocket.onmessage = function(e) {
+                try {
+                    const data = JSON.parse(e.data);
+                    logDebug(`Received message type: ${data.type} from ${data.sender}`);
+                    
+                    switch(data.type) {
+                        case 'offer':
+                            handleOffer(data);
+                            break;
+                        case 'answer':
+                            handleAnswer(data);
+                            break;
+                        case 'candidate':
+                            handleCandidate(data);
+                            break;
+                        case 'user_joined':
+                            logDebug(`User ${data.username} joined the call`);
+                            if (!isStarted) {
+                                isInitiator = true;
+                                startCall();
+                            }
+                            break;
+                        case 'user_left':
+                            logDebug(`User ${data.username} left the call`);
+                            if (peerConnection) {
+                                endCall();
+                            }
+                            break;
+                        default:
+                            logDebug('Unknown message type: ' + data.type);
+                    }
+                } catch (error) {
+                    logDebug('Error processing message: ' + error.message);
+                }
+            };
+        } catch (error) {
+            logDebug('Error creating WebSocket connection: ' + error.message);
+            connectionStatus.textContent = 'Error creating connection: ' + error.message;
+            connectionStatus.style.color = 'red';
+        }
+    }
+
+    async function startCall() {
+        try {
+            logDebug('Starting call...');
+            
+            // Get selected devices
+            const videoSource = videoSourceSelect.value;
+            const audioSource = audioSourceSelect.value;
+
+            // Try to get media with specific devices first
+            try {
+                localStream = await navigator.mediaDevices.getUserMedia({
+                    video: videoSource ? { deviceId: { exact: videoSource } } : true,
+                    audio: audioSource ? { deviceId: { exact: audioSource } } : true
+                });
+            } catch (deviceError) {
+                logDebug('Error with selected devices, trying default devices: ' + deviceError.message);
+                // If that fails, try with default devices
+                try {
+                    localStream = await navigator.mediaDevices.getUserMedia({
+                        video: true,
+                        audio: true
+                    });
+                } catch (defaultError) {
+                    // If that also fails, try with just audio
+                    logDebug('Error with default devices, trying audio only: ' + defaultError.message);
+                    try {
+                        localStream = await navigator.mediaDevices.getUserMedia({
+                            video: false,
+                            audio: true
+                        });
+                    } catch (audioError) {
+                        throw new Error('Could not access any media devices. Please check your camera and microphone permissions.');
+                    }
+                }
+            }
+
+            logDebug('Got local media stream');
+            localVideo.srcObject = localStream;
+
+            createPeerConnection();
+            localStream.getTracks().forEach(track => {
+                logDebug('Adding track to peer connection: ' + track.kind);
+                peerConnection.addTrack(track, localStream);
+            });
+
+            if (isInitiator) {
+                logDebug('Creating offer as initiator');
+                const offer = await peerConnection.createOffer();
+                logDebug('Created offer');
+                await peerConnection.setLocalDescription(offer);
+                logDebug('Set local description');
+                
+                videoCallSocket.send(JSON.stringify({
+                    type: 'offer',
+                    offer: offer,
+                    sender: username
+                }));
+                logDebug('Sent offer to peer');
+            }
+
+            startButton.disabled = true;
+            endButton.disabled = false;
+            isStarted = true;
+            connectionStatus.textContent = 'Call started';
+        } catch (error) {
+            logDebug('Error starting call: ' + error.message);
+            connectionStatus.textContent = 'Error: ' + error.message;
+            connectionStatus.style.color = 'red';
+            
+            // Show a more user-friendly error message
+            alert('Could not access your camera and/or microphone. Please make sure:\n\n' +
+                  '1. You have granted camera and microphone permissions to this website\n' +
+                  '2. Your camera and microphone are properly connected\n' +
+                  '3. No other application is using your camera or microphone\n\n' +
+                  'You can check permissions in your browser settings.');
+        }
+    }
+
+    function createPeerConnection() {
+        logDebug('Creating peer connection');
+        peerConnection = new RTCPeerConnection(configuration);
+        
+        peerConnection.onicecandidate = event => {
+            if (event.candidate) {
+                logDebug('New ICE candidate: ' + event.candidate.candidate);
+                videoCallSocket.send(JSON.stringify({
+                    type: 'candidate',
+                    candidate: event.candidate,
+                    sender: username
+                }));
+            }
+        };
+
+        peerConnection.ontrack = event => {
+            logDebug('Received remote track: ' + event.track.kind);
+            remoteVideo.srcObject = event.streams[0];
+            connectionStatus.textContent = 'Remote video connected';
+        };
+
+        peerConnection.oniceconnectionstatechange = () => {
+            logDebug('ICE connection state: ' + peerConnection.iceConnectionState);
+            connectionStatus.textContent = 'ICE state: ' + peerConnection.iceConnectionState;
+        };
+
+        peerConnection.onicegatheringstatechange = () => {
+            logDebug('ICE gathering state: ' + peerConnection.iceGatheringState);
+        };
+
+        peerConnection.onsignalingstatechange = () => {
+            logDebug('Signaling state: ' + peerConnection.signalingState);
+        };
+    }
+
+    async function handleOffer(data) {
+        logDebug('Handling offer from: ' + data.sender);
+        if (!peerConnection) {
+            createPeerConnection();
+        }
+
+        try {
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(data.offer));
+            logDebug('Set remote description');
+            const answer = await peerConnection.createAnswer();
+            logDebug('Created answer');
+            await peerConnection.setLocalDescription(answer);
+            logDebug('Set local description');
+            
+            videoCallSocket.send(JSON.stringify({
+                type: 'answer',
+                answer: answer,
+                sender: username
+            }));
+            logDebug('Sent answer to peer');
+        } catch (error) {
+            logDebug('Error handling offer: ' + error.message);
+            connectionStatus.textContent = 'Error handling offer: ' + error.message;
+            connectionStatus.style.color = 'red';
+        }
+    }
+
+    async function handleAnswer(data) {
+        logDebug('Handling answer from: ' + data.sender);
+        try {
+            if (peerConnection.signalingState !== 'stable') {
+                await peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+                logDebug('Set remote description from answer');
+            } else {
+                logDebug('Ignoring answer in stable state');
+            }
+        } catch (error) {
+            logDebug('Error handling answer: ' + error.message);
+            connectionStatus.textContent = 'Error handling answer: ' + error.message;
+            connectionStatus.style.color = 'red';
+        }
+    }
+
+    async function handleCandidate(data) {
+        logDebug('Handling ICE candidate from: ' + data.sender);
+        try {
+            if (peerConnection.remoteDescription) {
+                await peerConnection.addIceCandidate(new RTCIceCandidate(data.candidate));
+                logDebug('Added ICE candidate');
+            } else {
+                logDebug('Ignoring ICE candidate before remote description is set');
+            }
+        } catch (error) {
+            logDebug('Error handling candidate: ' + error.message);
+            connectionStatus.textContent = 'Error handling candidate: ' + error.message;
+            connectionStatus.style.color = 'red';
+        }
+    }
+
+    function endCall() {
+        logDebug('Ending call');
+        if (localStream) {
+            localStream.getTracks().forEach(track => track.stop());
+        }
+        if (peerConnection) {
+            peerConnection.close();
+        }
+        localVideo.srcObject = null;
+        remoteVideo.srcObject = null;
+        startButton.disabled = false;
+        endButton.disabled = true;
+        isStarted = false;
+        isInitiator = false;
+        connectionStatus.textContent = 'Call ended';
+    }
+
+    function toggleVideo() {
+        if (localStream) {
+            const videoTrack = localStream.getVideoTracks()[0];
+            if (videoTrack) {
+                videoTrack.enabled = !videoTrack.enabled;
+                toggleVideoButton.textContent = videoTrack.enabled ? 'Toggle Video' : 'Video Off';
+                logDebug('Video ' + (videoTrack.enabled ? 'enabled' : 'disabled'));
+            }
+        }
+    }
+
+    function toggleAudio() {
+        if (localStream) {
+            const audioTrack = localStream.getAudioTracks()[0];
+            if (audioTrack) {
+                audioTrack.enabled = !audioTrack.enabled;
+                toggleAudioButton.textContent = audioTrack.enabled ? 'Toggle Audio' : 'Audio Off';
+                logDebug('Audio ' + (audioTrack.enabled ? 'enabled' : 'disabled'));
+            }
+        }
+    }
+
+    // Initialize media devices when page loads
+    getMediaDevices();
+
+    // Request permission to access media devices
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+        .then(stream => {
+            // Stop the stream immediately, we just needed the permission
+            stream.getTracks().forEach(track => track.stop());
+            // Refresh device list after getting permission
+            getMediaDevices();
+        })
+        .catch(error => {
+            logDebug('Error getting initial media permission: ' + error.message);
+        });
+
+    // Event listeners
+    startButton.addEventListener('click', startCall);
+    endButton.addEventListener('click', endCall);
+    toggleVideoButton.addEventListener('click', toggleVideo);
+    toggleAudioButton.addEventListener('click', toggleAudio);
+
+    // Connect WebSocket when page loads
+    connectWebSocket();
+</script>
+{% endblock %} 

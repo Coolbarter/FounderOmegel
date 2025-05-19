@@ -1,0 +1,143 @@
+{% extends 'base.html' %}
+
+{% block title %}Match Details - FounderChat{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row">
+        <div class="col-md-8">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h2 class="card-title">Match Details</h2>
+                        <span class="badge bg-{{ match.status|lower }}">
+                            {{ match.status|title }}
+                        </span>
+                    </div>
+
+                    <div class="row mb-4">
+                        <div class="col-md-6">
+                            <h5>Your Profile</h5>
+                            <p class="mb-1">
+                                <strong>Name:</strong> {{ user.get_full_name|default:user.username }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Company:</strong> {{ user.founder_profile.company_name }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Industry:</strong> {{ user.founder_profile.get_industry_display }}
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h5>Matched Founder</h5>
+                            <p class="mb-1">
+                                <strong>Name:</strong> {{ other_profile.user.get_full_name|default:other_profile.user.username }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Company:</strong> {{ other_profile.company_name }}
+                            </p>
+                            <p class="mb-1">
+                                <strong>Industry:</strong> {{ other_profile.get_industry_display }}
+                            </p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <h5>Match Information</h5>
+                        <p class="mb-1">
+                            <strong>Match Score:</strong> {{ match.match_score|floatformat:2 }}
+                        </p>
+                        <p class="mb-1">
+                            <strong>Created:</strong> {{ match.created_at|date:"F d, Y H:i" }}
+                        </p>
+                        {% if match.scheduled_time %}
+                            <p class="mb-1">
+                                <strong>Scheduled Meeting:</strong> {{ match.scheduled_time|date:"F d, Y H:i" }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    {% if match.common_interests %}
+                        <div class="mb-4">
+                            <h5>Common Interests</h5>
+                            <div class="d-flex flex-wrap gap-2">
+                                {% for interest in match.common_interests %}
+                                    <span class="badge bg-primary">{{ interest }}</span>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    {% endif %}
+
+                    {% if match.notes %}
+                        <div class="mb-4">
+                            <h5>Notes</h5>
+                            <p class="card-text">{{ match.notes }}</p>
+                        </div>
+                    {% endif %}
+
+                    {% if can_respond %}
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5>Respond to Match Request</h5>
+                                <form method="post" action="{% url 'match_response' match.id %}">
+                                    {% csrf_token %}
+                                    {% for field in response_form %}
+                                        <div class="mb-3">
+                                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                            {{ field.errors }}
+                                            {{ field }}
+                                        </div>
+                                    {% endfor %}
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary">Submit Response</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    {% elif match.status == 'accepted' %}
+                        <div class="card">
+                            <div class="card-body">
+                                <h5>Schedule Meeting</h5>
+                                <form method="post" action="{% url 'match_update' match.id %}">
+                                    {% csrf_token %}
+                                    {% for field in update_form %}
+                                        <div class="mb-3">
+                                            <label for="{{ field.id_for_label }}" class="form-label">{{ field.label }}</label>
+                                            {{ field.errors }}
+                                            {{ field }}
+                                        </div>
+                                    {% endfor %}
+                                    <div class="d-grid gap-2">
+                                        <button type="submit" class="btn btn-primary">Update Meeting</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card mb-4">
+                <div class="card-body">
+                    <h5 class="card-title">Other Founder's Profile</h5>
+                    <div class="text-center mb-3">
+                        {% if other_profile.profile_picture %}
+                            <img src="{{ other_profile.profile_picture.url }}" alt="{{ other_profile.company_name }}" class="profile-avatar mb-2">
+                        {% else %}
+                            <img src="{% static 'images/default-company.png' %}" alt="{{ other_profile.company_name }}" class="profile-avatar mb-2">
+                        {% endif %}
+                        <h6>{{ other_profile.company_name }}</h6>
+                        <p class="text-muted">{{ other_profile.get_stage_display }}</p>
+                    </div>
+                    <p class="card-text">{{ other_profile.description|truncatewords:30 }}</p>
+                    <div class="d-grid">
+                        <a href="{% url 'profile_detail' other_profile.user.id %}" class="btn btn-outline-primary">View Full Profile</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

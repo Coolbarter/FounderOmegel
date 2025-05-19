@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - FounderChat{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8 text-center">
+            <h1 class="display-4 mb-4">Welcome to FounderChat</h1>
+            <p class="lead mb-4">Connect with fellow founders, share experiences, and grow your network.</p>
+            
+            {% if user.is_authenticated %}
+                {% if user_profile %}
+                    <div class="mb-4">
+                        <h2>Your Profile</h2>
+                        <p>{{ user_profile.company_name }} | {{ user_profile.get_industry_display }}</p>
+                        <a href="{{ user_profile.get_absolute_url }}" class="btn btn-primary">Edit Profile</a>
+                    </div>
+                    <div class="mb-4">
+                        <h2>Quick Actions</h2>
+                        <div class="d-grid gap-2 d-md-block">
+                            <a href="{% url 'profile_list' %}" class="btn btn-outline-primary me-2">Find Founders</a>
+                            <a href="{% url 'match_list' %}" class="btn btn-outline-primary me-2">My Matches</a>
+                            <a href="{% url 'chat_list' %}" class="btn btn-outline-primary">My Chats</a>
+                        </div>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <h4>Complete Your Profile</h4>
+                        <p>Create your founder profile to start connecting with other founders.</p>
+                        <a href="{% url 'profile_create' %}" class="btn btn-primary">Create Profile</a>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="mb-4">
+                    <h2>Get Started</h2>
+                    <div class="d-grid gap-2 d-md-block">
+                        <a href="{% url 'account_login' %}" class="btn btn-primary me-2">Login</a>
+                        <a href="{% url 'account_signup' %}" class="btn btn-outline-primary">Register</a>
+                    </div>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 

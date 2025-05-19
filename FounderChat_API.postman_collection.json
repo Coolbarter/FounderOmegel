@@ -1,0 +1,415 @@
+{
+	"info": {
+		"_postman_id": "a1b2c3d4-e5f6-g7h8-i9j0-k1l2m3n4o5p6",
+		"name": "FounderChat API",
+		"description": "API collection for FounderChat - A real-time video chat platform for founders",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "Authentication",
+			"item": [
+				{
+					"name": "Register User",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"testpass123\",\n    \"username\": \"testuser\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/register/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", "register", ""]
+						},
+						"description": "Register a new user account"
+					}
+				},
+				{
+					"name": "Login (Get JWT Token)",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"pm.test(\"Save token\", function () {",
+									"    var jsonData = pm.response.json();",
+									"    pm.environment.set(\"token\", jsonData.access);",
+									"});"
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"email\": \"test@example.com\",\n    \"password\": \"testpass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/token/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", "token", ""]
+						},
+						"description": "Login and get JWT token"
+					}
+				},
+				{
+					"name": "Change Password",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"old_password\": \"testpass123\",\n    \"new_password\": \"newpass123\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/accounts/change-password/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", "change-password", ""]
+						},
+						"description": "Change user password"
+					}
+				}
+			]
+		},
+		{
+			"name": "User Profile",
+			"item": [
+				{
+					"name": "Get User Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/accounts/me/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "accounts", "me", ""]
+						},
+						"description": "Get current user details"
+					}
+				},
+				{
+					"name": "Create Founder Profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"company_name\": \"Test Company\",\n    \"industry\": \"Technology\",\n    \"stage\": \"seed\",\n    \"description\": \"A test company\",\n    \"website\": \"https://test.com\",\n    \"interests\": [\"AI\", \"SaaS\"],\n    \"looking_for\": \"Technical co-founder\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profiles/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profiles", ""]
+						},
+						"description": "Create a new founder profile"
+					}
+				},
+				{
+					"name": "Get Profile Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/profiles/{{profile_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profiles", "{{profile_id}}", ""]
+						},
+						"description": "Get founder profile details"
+					}
+				},
+				{
+					"name": "Update Profile",
+					"request": {
+						"method": "PATCH",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"description\": \"Updated description\",\n    \"interests\": [\"AI\", \"SaaS\", \"Blockchain\"]\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/profiles/{{profile_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "profiles", "{{profile_id}}", ""]
+						},
+						"description": "Update founder profile"
+					}
+				}
+			]
+		},
+		{
+			"name": "Matchmaking",
+			"item": [
+				{
+					"name": "Get Match Recommendations",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/matches/recommendations/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "matches", "recommendations", ""]
+						},
+						"description": "Get match recommendations"
+					}
+				},
+				{
+					"name": "Create Match",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"founder2\": \"{{other_user_id}}\",\n    \"notes\": \"Interested in collaboration\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/matches/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "matches", ""]
+						},
+						"description": "Create a new match"
+					}
+				},
+				{
+					"name": "Get All Matches",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/matches/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "matches", ""]
+						},
+						"description": "Get all matches for current user"
+					}
+				},
+				{
+					"name": "Accept Match",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/matches/{{match_id}}/accept/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "matches", "{{match_id}}", "accept", ""]
+						},
+						"description": "Accept a match"
+					}
+				},
+				{
+					"name": "Reject Match",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/matches/{{match_id}}/reject/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "matches", "{{match_id}}", "reject", ""]
+						},
+						"description": "Reject a match"
+					}
+				}
+			]
+		},
+		{
+			"name": "Chat",
+			"item": [
+				{
+					"name": "Create Chat Room",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"match\": \"{{match_id}}\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat-rooms/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat-rooms", ""]
+						},
+						"description": "Create a new chat room"
+					}
+				},
+				{
+					"name": "Get Chat Room Details",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat-rooms/{{chat_room_id}}/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat-rooms", "{{chat_room_id}}", ""]
+						},
+						"description": "Get chat room details"
+					}
+				},
+				{
+					"name": "Send Message",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							},
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n    \"content\": \"Hello! Nice to meet you!\"\n}"
+						},
+						"url": {
+							"raw": "{{base_url}}/api/chat-rooms/{{chat_room_id}}/send_message/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat-rooms", "{{chat_room_id}}", "send_message", ""]
+						},
+						"description": "Send a message in chat room"
+					}
+				},
+				{
+					"name": "Get Chat Messages",
+					"request": {
+						"method": "GET",
+						"header": [
+							{
+								"key": "Authorization",
+								"value": "Bearer {{token}}"
+							}
+						],
+						"url": {
+							"raw": "{{base_url}}/api/chat-rooms/{{chat_room_id}}/messages/",
+							"host": ["{{base_url}}"],
+							"path": ["api", "chat-rooms", "{{chat_room_id}}", "messages", ""]
+						},
+						"description": "Get all messages in a chat room"
+					}
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "base_url",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+} 

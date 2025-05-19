@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% load i18n %}
+{% load account socialaccount %}
+
+{% block title %}{% trans "Sign Up" %} - FounderChat{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <h1 class="text-center mb-4">{% trans "Sign Up" %}</h1>
+
+    {% get_providers as socialaccount_providers %}
+
+    {% if socialaccount_providers %}
+        <div class="socialaccount_ballot mb-4">
+            <div class="socialaccount_providers">
+                {% include "socialaccount/snippets/provider_list.html" with process="signup" %}
+            </div>
+            <div class="login-or text-center my-3">
+                <span class="text-muted">{% trans 'or' %}</span>
+            </div>
+        </div>
+        {% include "socialaccount/snippets/login_extra.html" %}
+    {% endif %}
+
+    <form class="signup" id="signup_form" method="post" action="{% url 'account_signup' %}">
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+        {% endif %}
+        <div class="d-grid gap-2">
+            <button class="btn btn-primary" type="submit">{% trans "Sign Up" %}</button>
+        </div>
+    </form>
+
+    <div class="text-center mt-4">
+        <p class="mb-0">{% trans "Already have an account?" %} <a href="{{ login_url }}" class="text-decoration-none">{% trans "Sign In" %}</a></p>
+    </div>
+</div>
+{% endblock %} 

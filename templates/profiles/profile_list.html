@@ -1,0 +1,302 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load crispy_forms_tags %}
+
+{% block title %}Find Founders - FounderChat{% endblock %}
+
+{% block extra_css %}
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+<style>
+    .filter-section {
+        background-color: #f8f9fa;
+        border-radius: 0.5rem;
+        padding: 1rem;
+        margin-bottom: 1rem;
+    }
+    .filter-title {
+        font-size: 0.875rem;
+        font-weight: 600;
+        color: #495057;
+        margin-bottom: 0.75rem;
+    }
+    .profile-card {
+        transition: transform 0.2s ease-in-out;
+        height: 100%;
+    }
+    .profile-card:hover {
+        transform: translateY(-5px);
+    }
+    .profile-avatar {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+    }
+    .badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row">
+        <!-- Filters Sidebar -->
+        <div class="col-lg-3">
+            <form method="get" class="mb-4">
+                <!-- Basic Search -->
+                <div class="filter-section">
+                    <h6 class="filter-title">Basic Search</h6>
+                    <div class="input-group input-group-sm">
+                        <input type="text" name="search" class="form-control form-control-sm" placeholder="Search..." value="{{ request.GET.search }}">
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Location Filters -->
+                <div class="filter-section">
+                    <h6 class="filter-title">Location</h6>
+                    <div class="mb-2">
+                        <select name="country" class="form-select form-select-sm">
+                            <option value="">Country</option>
+                            {% for code, name in countries %}
+                                <option value="{{ code }}" {% if request.GET.country == code %}selected{% endif %}>{{ name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <input type="text" name="city_region" class="form-control form-control-sm" placeholder="City/Region" value="{{ request.GET.city_region }}">
+                    </div>
+                    <div class="mb-2">
+                        <select name="timezone" class="form-select form-select-sm">
+                            <option value="">Timezone</option>
+                            {% for tz in timezones %}
+                                <option value="{{ tz }}" {% if request.GET.timezone == tz %}selected{% endif %}>{{ tz }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select name="languages" class="form-select form-select-sm select2" multiple>
+                            {% for lang in languages %}
+                                <option value="{{ lang }}" {% if lang in request.GET.languages %}selected{% endif %}>{{ lang }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Personal Filters -->
+                <div class="filter-section">
+                    <h6 class="filter-title">Personal</h6>
+                    <div class="mb-2">
+                        <select name="gender" class="form-select form-select-sm">
+                            <option value="">Gender</option>
+                            {% for value, label in gender_choices %}
+                                <option value="{{ value }}" {% if request.GET.gender == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select name="role" class="form-select form-select-sm">
+                            <option value="">Role</option>
+                            {% for value, label in role_choices %}
+                                <option value="{{ value }}" {% if request.GET.role == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select name="years_experience" class="form-select form-select-sm">
+                            <option value="">Years Experience</option>
+                            {% for i in "0123456789"|make_list %}
+                                <option value="{{ i }}" {% if request.GET.years_experience == i %}selected{% endif %}>{{ i }}+ years</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input type="checkbox" name="has_exited" class="form-check-input" id="has_exited" {% if request.GET.has_exited %}checked{% endif %}>
+                            <label class="form-check-label" for="has_exited">Has Exited</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Company Filters -->
+                <div class="filter-section">
+                    <h6 class="filter-title">Company</h6>
+                    <div class="mb-2">
+                        <select name="revenue_stage" class="form-select form-select-sm">
+                            <option value="">Revenue Stage</option>
+                            {% for value, label in revenue_stage_choices %}
+                                <option value="{{ value }}" {% if request.GET.revenue_stage == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select name="funding_stage" class="form-select form-select-sm">
+                            <option value="">Funding Stage</option>
+                            {% for value, label in funding_stage_choices %}
+                                <option value="{{ value }}" {% if request.GET.funding_stage == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select name="company_size" class="form-select form-select-sm">
+                            <option value="">Company Size</option>
+                            <option value="1-10" {% if request.GET.company_size == '1-10' %}selected{% endif %}>1-10</option>
+                            <option value="11-50" {% if request.GET.company_size == '11-50' %}selected{% endif %}>11-50</option>
+                            <option value="51-200" {% if request.GET.company_size == '51-200' %}selected{% endif %}>51-200</option>
+                            <option value="201+" {% if request.GET.company_size == '201+' %}selected{% endif %}>201+</option>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select name="business_model" class="form-select form-select-sm">
+                            <option value="">Business Model</option>
+                            {% for value, label in business_model_choices %}
+                                <option value="{{ value }}" {% if request.GET.business_model == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select name="tech_stack" class="form-select form-select-sm select2" multiple>
+                            {% for tech in tech_stack %}
+                                <option value="{{ tech }}" {% if tech in request.GET.tech_stack %}selected{% endif %}>{{ tech }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Preferences Filters -->
+                <div class="filter-section">
+                    <h6 class="filter-title">Preferences</h6>
+                    <div class="mb-2">
+                        <select name="interests" class="form-select form-select-sm select2" multiple>
+                            {% for value, label in interest_choices %}
+                                <option value="{{ value }}" {% if value in request.GET.interests %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <select name="looking_for" class="form-select form-select-sm select2" multiple>
+                            {% for value, label in looking_for_choices %}
+                                <option value="{{ value }}" {% if value in request.GET.looking_for %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Additional Filters -->
+                <div class="filter-section">
+                    <h6 class="filter-title">Additional</h6>
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_vc_backed" class="form-check-input" id="is_vc_backed" {% if request.GET.is_vc_backed %}checked{% endif %}>
+                            <label class="form-check-label" for="is_vc_backed">VC Backed</label>
+                        </div>
+                    </div>
+                    <div class="mb-2">
+                        <div class="form-check">
+                            <input type="checkbox" name="is_bootstrapped" class="form-check-input" id="is_bootstrapped" {% if request.GET.is_bootstrapped %}checked{% endif %}>
+                            <label class="form-check-label" for="is_bootstrapped">Bootstrapped</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="d-grid gap-2">
+                    <button type="submit" class="btn btn-primary btn-sm">Apply Filters</button>
+                    <a href="{% url 'profile_list' %}" class="btn btn-outline-secondary btn-sm">Clear Filters</a>
+                </div>
+            </form>
+        </div>
+
+        <!-- Profile List -->
+        <div class="col-lg-9">
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+                {% for profile in profiles %}
+                <div class="col">
+                    <div class="card profile-card h-100">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center mb-3">
+                                {% if profile.profile_picture %}
+                                    <img src="{{ profile.profile_picture.url }}" alt="{{ profile.company_name }}" class="profile-avatar me-3">
+                                {% else %}
+                                    <img src="{% static 'images/default-avatar.png' %}" alt="Default Avatar" class="profile-avatar me-3">
+                                {% endif %}
+                                <div>
+                                    <h5 class="card-title mb-1">{{ profile.company_name }}</h5>
+                                    <p class="card-text text-muted small mb-0">{{ profile.get_job_title_display }} | {{ profile.years_experience }}+ years</p>
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <span class="badge bg-primary me-1">{{ profile.get_industry_display }}</span>
+                                <span class="badge bg-secondary me-1">{{ profile.get_stage_display }}</span>
+                                {% if profile.country %}
+                                    <span class="badge bg-info">{{ profile.country }}</span>
+                                {% endif %}
+                            </div>
+                            <div class="d-flex justify-content-between align-items-center">
+                                <small class="text-muted">
+                                    <i class="fas fa-map-marker-alt me-1"></i>
+                                    {{ profile.city_region|default:"Remote" }}
+                                </small>
+                                <a href="{% url 'profile_detail' profile.id %}" class="btn btn-outline-primary btn-sm">View Profile</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% empty %}
+                <div class="col-12">
+                    <div class="alert alert-info">
+                        No profiles found matching your criteria.
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Pagination -->
+            {% if is_paginated %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if page_obj.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">&laquo; First</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Previous</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item active">
+                        <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                    </li>
+
+                    {% if page_obj.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Next</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% for key, value in request.GET.items %}{% if key != 'page' %}&{{ key }}={{ value }}{% endif %}{% endfor %}">Last &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.select2').select2({
+            theme: 'bootstrap-5',
+            width: '100%',
+            placeholder: 'Select options',
+            allowClear: true
+        });
+    });
+</script>
+{% endblock %}

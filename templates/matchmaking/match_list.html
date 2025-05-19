@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% load matchmaking_filters %}
+
+{% block title %}My Matches - FounderChat{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h2 class="mb-4">My Matches</h2>
+
+    <div class="row">
+        {% for match in matches %}
+            <div class="col-md-6 col-lg-4 mb-4">
+                <div class="card h-100 match-card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <span class="badge bg-{{ match.status|lower }}">
+                                {{ status_choices|get_item:match.status }}
+                            </span>
+                            <small class="text-muted">{{ match.created_at|timesince }} ago</small>
+                        </div>
+
+                        <div class="text-center mb-3">
+                            {% if match.founder1 == user %}
+                                <h5 class="card-title">Match with {{ match.founder2.get_full_name|default:match.founder2.username }}</h5>
+                            {% else %}
+                                <h5 class="card-title">Match with {{ match.founder1.get_full_name|default:match.founder1.username }}</h5>
+                            {% endif %}
+                            <p class="text-muted">Match Score: {{ match.match_score|floatformat:2 }}</p>
+                        </div>
+
+                        {% if match.common_interests %}
+                            <div class="mb-3">
+                                <h6>Common Interests:</h6>
+                                <div class="d-flex flex-wrap gap-2">
+                                    {% for interest in match.common_interests %}
+                                        <span class="badge bg-primary">{{ interest }}</span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                        {% endif %}
+
+                        {% if match.notes %}
+                            <p class="card-text"><small class="text-muted">Notes: {{ match.notes|truncatewords:20 }}</small></p>
+                        {% endif %}
+
+                        {% if match.scheduled_time %}
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    Scheduled: {{ match.scheduled_time|date:"M d, Y H:i" }}
+                                </small>
+                            </p>
+                        {% endif %}
+
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'match_detail' match.id %}" class="btn btn-outline-primary">View Details</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <div class="alert alert-info">
+                    You don't have any matches yet. <a href="{% url 'profile_list' %}">Find potential matches</a>.
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% if page_obj.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1">&laquo; First</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item active">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+
+                {% if page_obj.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    {% endif %}
+</div>
+{% endblock %} 

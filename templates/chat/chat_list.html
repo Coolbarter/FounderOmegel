@@ -1,0 +1,88 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Chats - FounderChat{% endblock %}
+
+{% block extra_css %}
+<style>
+    .chat-card {
+        transition: transform 0.2s ease-in-out;
+        height: 100%;
+    }
+    .chat-card:hover {
+        transform: translateY(-5px);
+    }
+    .chat-avatar {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        border-radius: 50%;
+    }
+    .chat-preview {
+        font-size: 0.875rem;
+        color: #6c757d;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .chat-time {
+        font-size: 0.75rem;
+        color: #adb5bd;
+    }
+    .unread-badge {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2 class="mb-0">Your Chats</h2>
+            </div>
+
+            {% if chat_rooms %}
+                {% for chat_room in chat_rooms %}
+                    <div class="card chat-card mb-3">
+                        <div class="card-body">
+                            <div class="d-flex align-items-center">
+                                {% if chat_room.other_user.founder_profile.profile_picture %}
+                                    <img src="{{ chat_room.other_user.founder_profile.profile_picture.url }}" alt="{{ chat_room.other_user.founder_profile.company_name }}" class="chat-avatar me-3">
+                                {% else %}
+                                    <img src="{% static 'images/default-avatar.png' %}" alt="Default Avatar" class="chat-avatar me-3">
+                                {% endif %}
+                                <div class="flex-grow-1">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <h5 class="card-title mb-1">{{ chat_room.other_user.founder_profile.company_name }}</h5>
+                                        <small class="chat-time">{{ chat_room.updated_at|timesince }} ago</small>
+                                    </div>
+                                    <p class="chat-preview mb-0">
+                                        {% with last_message=chat_room.messages.last %}
+                                            {% if last_message %}
+                                                {{ last_message.content|truncatechars:50 }}
+                                            {% else %}
+                                                No messages yet
+                                            {% endif %}
+                                        {% endwith %}
+                                    </p>
+                                </div>
+                                <a href="{% url 'chat_detail' chat_room.pk %}" class="btn btn-primary btn-sm ms-3">
+                                    <i class="fas fa-comments"></i>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    You don't have any active chats yet. Start a conversation with other founders!
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %} 
