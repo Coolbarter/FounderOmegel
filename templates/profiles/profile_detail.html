@@ -50,6 +50,27 @@
         gap: 0.5rem;
         margin-top: 0.5rem;
     }
+
+    .profile-header {
+        position: relative;
+        text-align: center;
+        margin-bottom: 2rem;
+    }
+
+    .edit-button {
+        position: absolute;
+        top: 0;
+        right: 0;
+        margin: 1rem;
+    }
+
+    .profile-avatar {
+        width: 150px;
+        height: 150px;
+        object-fit: cover;
+        border-radius: 50%;
+        margin-bottom: 1rem;
+    }
 </style>
 {% endblock %}
 
@@ -62,7 +83,110 @@
         {% else %}
             <img src="{% static 'images/default-avatar.png' %}" alt="Default Avatar" class="profile-avatar">
         {% endif %}
+        {% if is_own_profile %}
+        <a href="{% url 'profile_update' %}" class="btn btn-primary edit-button">
+            <i class="fas fa-edit"></i> Edit Profile
+        </a>
+        {% endif %}
+    </div>
 
+    <!-- Personal Information -->
+    <div class="info-container">
+        <div class="info-header">
+            <i class="fas fa-user"></i>
+            <h4>Personal Information</h4>
+        </div>
+        <div class="form-grid">
+            <div>
+                <h6 class="text-muted mb-1">Name</h6>
+                <p class="profile-value">{{ founder_profile.name }}</p>
+            </div>
+
+            {% if founder_profile.gender %}
+            <div>
+                <h6 class="text-muted mb-1">Gender</h6>
+                <p class="profile-value">{{ founder_profile.get_gender_display }}</p>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.job_title %}
+            <div>
+                <h6 class="text-muted mb-1">Role</h6>
+                <p class="profile-value">{{ founder_profile.get_job_title_display }}</p>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.years_experience %}
+            <div>
+                <h6 class="text-muted mb-1">Experience</h6>
+                <p class="profile-value">{{ founder_profile.years_experience }}+ years</p>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.languages_spoken %}
+            <div>
+                <h6 class="text-muted mb-1">Languages</h6>
+                <p class="profile-value">{{ founder_profile.languages_spoken|join:", " }}</p>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.timezone %}
+            <div>
+                <h6 class="text-muted mb-1">Timezone</h6>
+                <p class="profile-value">{{ founder_profile.timezone }}</p>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.country %}
+            <div>
+                <h6 class="text-muted mb-1">Country</h6>
+                <p class="profile-value">{{ founder_profile.country }}</p>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.city_region %}
+            <div>
+                <h6 class="text-muted mb-1">City/Region</h6>
+                <p class="profile-value">{{ founder_profile.city_region }}</p>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.linkedin %}
+            <div>
+                <h6 class="text-muted mb-1">LinkedIn</h6>
+                <a href="{{ founder_profile.linkedin }}" target="_blank" class="profile-value text-decoration-none">{{ founder_profile.linkedin }}</a>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.twitter %}
+            <div>
+                <h6 class="text-muted mb-1">Twitter</h6>
+                <a href="{{ founder_profile.twitter }}" target="_blank" class="profile-value text-decoration-none">{{ founder_profile.twitter }}</a>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.interests %}
+            <div class="full-width">
+                <h6 class="text-muted mb-1">Interests</h6>
+                <div class="badge-container">
+                    {% for interest in founder_profile.interests %}
+                        <span class="badge bg-primary">{{ interest }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+
+            {% if founder_profile.looking_for %}
+            <div class="full-width">
+                <h6 class="text-muted mb-1">Looking For</h6>
+                <div class="badge-container">
+                    {% for looking in founder_profile.looking_for %}
+                        <span class="badge bg-secondary">{{ looking }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
     </div>
 
     <!-- Company Information -->
@@ -161,53 +285,13 @@
             </div>
             {% endif %}
 
-            {% if founder_profile.degree %}
+            {% if founder_profile.accelerator %}
             <div>
-                <h6 class="text-muted mb-1">Degree</h6>
-                <p class="profile-value">{{ founder_profile.degree }}</p>
-            </div>
-            {% endif %}
-
-            {% if founder_profile.field_of_study %}
-            <div>
-                <h6 class="text-muted mb-1">Field of Study</h6>
-                <p class="profile-value">{{ founder_profile.field_of_study }}</p>
-            </div>
-            {% endif %}
-
-            {% if founder_profile.graduation_year %}
-            <div>
-                <h6 class="text-muted mb-1">Graduation Year</h6>
-                <p class="profile-value">{{ founder_profile.graduation_year }}</p>
-            </div>
-            {% endif %}
-
-            {% if founder_profile.gpa %}
-            <div>
-                <h6 class="text-muted mb-1">GPA</h6>
-                <p class="profile-value">{{ founder_profile.gpa }}</p>
-            </div>
-            {% endif %}
-
-            {% if founder_profile.extra_curriculars %}
-            <div>
-                <h6 class="text-muted mb-1">Extracurriculars</h6>
-                <p class="profile-value">{{ founder_profile.extra_curriculars }}</p>
+                <h6 class="text-muted mb-1">Accelerator</h6>
+                <p class="profile-value">{{ founder_profile.accelerator }}</p>
             </div>
             {% endif %}
         </div>
     </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-        <h3 class="quick-actions-header">Quick Actions</h3>
-        <div class="button-container">
-            <a href="{% url 'founder_discovery' %}" class="btn btn-quick-action">Find Founders</a>
-            <a href="{% url 'match_list' %}" class="btn btn-quick-action">My Matches</a>
-            <a href="{% url 'chat_list' %}" class="btn btn-quick-action">My Chats</a>
-        </div>
-    </div>
-
 </div>
-
 {% endblock %}
