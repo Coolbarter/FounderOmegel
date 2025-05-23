@@ -1,85 +1,76 @@
 {% extends 'base.html' %}
+{% load static %}
 
-{% block title %}Home - FounderChat{% endblock %}
+{% block title %}Founder Matching Homepage - FounderChat{% endblock %}
 
 {% block extra_css %}
-<style>
-    body {
-        background: linear-gradient(to bottom right, #007bff, #6610f2);
-        color: #fff; /* White text for readability on dark background */
-        min-height: 100vh; /* Ensure gradient covers the whole viewport height */
-    }
-    .container {
-        background-color: rgba(255, 255, 255, 0.1); /* Semi-transparent white background for content area */
-        padding: 3rem; /* Add some padding */
-        border-radius: 15px; /* Rounded corners for the content area */
-        margin-top: 50px; /* Add some space from the top */
-        margin-bottom: 50px; /* Add space at the bottom */
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3); /* Add a subtle shadow */
-    }
-    .display-4, .lead, h2 {
-        color: #fff; /* Ensure headings and lead text are white */
-    }
-    /* Custom style for Quick Action buttons */
-    .btn-quick-action {
-        background-color: #20c997; /* Teal color */
-        border-color: #20c997; /* Teal color */
-        color: #fff; /* White text */
-        padding: 0.75rem 1.5rem;
-        border-radius: 2rem; /* More rounded corners */
-        font-size: 1.1rem; /* Slightly larger font */
-        margin: 0.5rem; /* Space between buttons */
-        transition: background-color 0.3s ease, border-color 0.3s ease;
-    }
-    .btn-quick-action:hover {
-        background-color: #17a2b8; /* Darker teal on hover */
-        border-color: #17a2b8; /* Darker teal on hover */
-        color: #fff;
-    }
-    /* Adjust footer style for the new background */
-    footer {
-        background-color: rgba(0, 0, 0, 0.3); /* Semi-transparent dark footer */
-        color: #fff; /* White text for footer */
-    }
-    .navbar {
-         background-color: rgba(0, 0, 0, 0.5) !important; /* Semi-transparent dark navbar */
-    }
-    .navbar-brand, .nav-link {
-        color: #fff !important; /* White text for navbar links */
-    }
-    .navbar-toggler-icon {
-         filter: invert(1); /* Make toggler icon white */
-    }
-
-</style>
+<link rel="stylesheet" href="{% static 'css/home.css' %}">
 {% endblock %}
 
 {% block content %}
-<div class="container text-center">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <h1 class="display-3 mb-4">Welcome to FounderChat</h1>
-            <p class="lead mb-5">Connect with fellow founders, share experiences, and grow your network.</p>
-            
-            {% if user.is_authenticated %}
-                
-                    <div class="mb-4">
-                        <h2 class="mb-4">Quick Actions</h2>
-                        <div class="d-grid gap-3 col-md-8 mx-auto">
-                            <a href="{% url 'founder_discovery' %}" class="btn btn-quick-action">Find Founders</a>
-                            <a href="{% url 'match_list' %}" class="btn btn-quick-action">My Matches</a>
-                            <a href="{% url 'chat_list' %}" class="btn btn-quick-action">My Chats</a>
-                        </div>
-                    </div>
-                {% else %}
-                    <div class="mb-4">
-                        <h2 class="mb-4">Get Started</h2>
-                    <div class="d-grid gap-3 col-md-8 mx-auto">
-                        <a href="{% url 'account_login' %}" class="btn btn-quick-action">Login</a>
-                        <a href="{% url 'account_signup' %}" class="btn btn-quick-action">Register</a>
-                    </div>
+<div class="hero-section">
+    <div class="container">
+        <h1>Connect with your co-founder</h1>
+        <p>Find your perfect co-founder match and start building your dream venture today.</p>
+        <a href="{% url 'video_call:video_call' room_name='new_call' %}" class="btn btn-primary">Start a Video Call</a>
+    </div>
+</div>
+
+<div class="how-it-works-section bg-light">
+    <div class="container">
+        <h2>How it works</h2>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="how-it-works-item">
+                    <i class="fas fa-user-plus"></i> {# Placeholder icon #}
+                    <h4>Create your profile</h4>
+                    <p>Tell us about your skills, interests, and what you are looking for in a co-founder.</p>
                 </div>
-            {% endif %}
+            </div>
+            <div class="col-md-4">
+                <div class="how-it-works-item">
+                    <i class="fas fa-video"></i> {# Placeholder icon #}
+                    <h4>Start a video call</h4>
+                    <p>Instantly connect with potential matches through our integrated video call feature.</p>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="how-it-works-item">
+                    <i class="fas fa-search"></i> {# Placeholder icon #}
+                    <h4>Find your co-founder</h4>
+                    <p>Browse profiles, filter by criteria, and find the perfect match for your startup.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="featured-founders-section">
+    <div class="container">
+        <h2>Featured founders</h2>
+        <div class="row justify-content-center">
+            {# Placeholder founder cards - replace with actual loop if needed #}
+            <div class="col-md-4 col-sm-6">
+                <div class="founder-card">
+                    <img src="{% static 'images/founder1.jpg' %}" alt="Founder 1"> {# Placeholder image #}
+                    <h5>Ethan Carter</h5>
+                    <p>Looking for a tech co-founder with experience in AI.</p>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="founder-card">
+                    <img src="{% static 'images/founder2.jpg' %}" alt="Founder 2"> {# Placeholder image #}
+                    <h5>Sophia Clark</h5>
+                    <p>Seeking a co-founder with background in marketing.</p>
+                </div>
+            </div>
+            <div class="col-md-4 col-sm-6">
+                <div class="founder-card">
+                    <img src="{% static 'images/founder3.jpg' %}" alt="Founder 3"> {# Placeholder image #}
+                    <h5>Liam Bennett</h5>
+                    <p>Searching for a co-founder with expertise in finance.</p>
+                </div>
+            </div>
         </div>
     </div>
 </div>

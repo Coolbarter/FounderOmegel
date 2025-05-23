@@ -8,20 +8,123 @@
     <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <!-- Bootstrap CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"> {# Add this line for icons #}
     <!-- Custom CSS -->
     {% load static %}
     <style>
         :root {
-            --primary-color: #0d6efd;
-            --primary-hover: #0b5ed7;
+            --primary-color: #0d6efd; /* Default Bootstrap blue */
+            --primary-hover: #0b5ed7; /* Darker Bootstrap blue */
+            --secondary-color: #6c757d; /* Default Bootstrap grey */
+            --secondary-hover: #5c636a; /* Darker Bootstrap grey */
+            --success-color: #28a745; /* Green button color from screenshot */
+            --success-hover: #218838; /* Darker green */
+            --info-color: #17a2b8;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
         }
 
+        body {
+            font-family: 'Arial', sans-serif; /* Ensure consistent font */
+            line-height: 1.6;
+            color: #333; /* Default text color */
+            background-color: #f8f9fa; /* Light background */
+        }
+
+        .container {
+            width: 100%;
+            padding-right: var(--bs-gutter-x,.75rem);
+            padding-left: var(--bs-gutter-x,.75rem);
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        @media (min-width: 576px) {
+          .container {
+            max-width: 540px;
+          }
+        }
+
+        @media (min-width: 768px) {
+          .container {
+            max-width: 720px;
+          }
+        }
+
+        @media (min-width: 992px) {
+          .container {
+            max-width: 960px;
+          }
+        }
+
+        @media (min-width: 1200px) {
+          .container {
+            max-width: 1140px;
+          }
+        }
+
+        @media (min-width: 1400px) {
+          .container {
+            max-width: 1320px;
+          }
+        }
+
+        /* Navbar Styling to match screenshot (White background, dark text) */
+        .navbar {
+            background-color: #ffffff !important; /* White background */
+            box-shadow: 0 2px 4px rgba(0,0,0,.08); /* Subtle shadow */
+        }
+
+        .navbar-brand {
+            color: #333 !important; /* Dark brand color */
+            font-weight: bold;
+            font-size: 1.5rem; /* Adjust size if needed */
+        }
+
+        .navbar-nav .nav-link {
+            color: #555 !important; /* Darker link color */
+            padding: 0.5rem 1rem;
+            font-weight: 500; /* Slightly bolder links */
+        }
+
+         .navbar-nav .nav-link:hover {
+            color: #000 !important; /* Black on hover */
+        }
+
+        .navbar-toggler {
+            border-color: rgba(0,0,0,.1);
+        }
+
+        .navbar-toggler-icon {
+             filter: none; /* Remove invert filter */
+             background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%280, 0, 0, 0.55%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e"); /* Default black toggler icon */
+        }
+
+        /* Ensure no padding conflicts with homepage layout */
+         main {
+             padding-top: 0 !important;
+             padding-bottom: 0 !important;
+         }
+
+
+        .footer {
+            background-color: #f8f9fa;
+            color: #555;
+            padding: 20px 0;
+            text-align: center;
+            margin-top: 60px; /* Match homepage section bottom margin */
+            border-top: 1px solid #e9ecef; /* Subtle border */
+        }
+
+        /* General Reusable Styles */
         .form-container {
             max-width: 500px;
             margin: 2rem auto;
             padding: 2rem;
             border-radius: 10px;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            background-color: #fff; /* White background for forms */
         }
 
         .profile-avatar {
@@ -32,6 +135,12 @@
             border: 3px solid #fff;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
         }
+
+        /* Add margin-bottom to form elements for better spacing */
+        .mb-3 {
+            margin-bottom: 1rem !important;
+        }
+
 
         .social-login-btn {
             width: 100%;
@@ -46,7 +155,7 @@
             color: white;
         }
 
-        .form-control, 
+        .form-control,
         .form-select {
             padding: 0.75rem 1rem;
             border: 1px solid #dee2e6;
@@ -54,7 +163,7 @@
             border-radius: 0.5rem;
         }
 
-        .form-control:focus, 
+        .form-control:focus,
         .form-select:focus {
             border-color: var(--primary-color);
             box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
@@ -79,6 +188,7 @@
         }
 
         .btn-primary {
+            /* Use the defined primary color or screenshot color if preferred */
             background-color: var(--primary-color);
             border-color: var(--primary-color);
         }
@@ -98,21 +208,22 @@
         }
 
         /* Select2 Customization */
+        /* Assuming you are using Select2 and Bootstrap 5 integration */
         .select2-container--bootstrap-5 .select2-selection {
-            min-height: 38px;
-            border-radius: 0.375rem;
+            min-height: 38px; /* Default input height */
+            border-radius: 0.375rem; /* Match Bootstrap input border-radius */
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__rendered {
-            padding: 0.375rem 0.75rem;
+            padding: 0.375rem 0.75rem; /* Match Bootstrap input padding */
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
-            background-color: var(--primary-color);
+            background-color: var(--primary-color); /* Use primary color */
             border: none;
             color: white;
-            padding: 0.25rem 0.5rem;
-            margin: 0.25rem;
+            padding: 0.25rem 0.5rem; /* Smaller padding for tags */
+            margin: 0.25rem; /* Space between tags */
             border-radius: 0.25rem;
         }
 
@@ -130,14 +241,15 @@
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    {# Removed navbar-dark bg-dark to rely on inline styling for white background #}
+    <nav class="navbar navbar-expand-lg">
         <div class="container">
             <a class="navbar-brand" href="{% url 'home' %}">FounderChat</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation"> {# Added ARIA attributes for accessibility #}
                 <span class="navbar-toggler-icon"></span>
             </button>
             <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0"> {# Added Bootstrap spacing classes #}
                     {% if user.is_authenticated %}
                         <li class="nav-item">
                             <a class="nav-link" href="{% url 'profile' %}">Profile</a>
@@ -175,9 +287,10 @@
     {% if messages %}
         <div class="container mt-3">
             {% for message in messages %}
-                <div class="alert alert-{{ message.tags }} alert-dismissible fade show">
+                {# Adjusting alert classes slightly for potential Bootstrap 5 compatibility #}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
                     {{ message }}
-                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
                 </div>
             {% endfor %}
         </div>
@@ -190,7 +303,7 @@
     </main>
 
     <!-- Footer -->
-    <footer class="footer mt-auto py-3 bg-light">
+    <footer class="footer"> {# Removed mt-auto py-3 bg-light as defined in style block #}
         <div class="container text-center">
             <span class="text-muted">© 2024 FounderChat. All rights reserved.</span>
         </div>
@@ -201,4 +314,4 @@
     <!-- Custom JS -->
     {% block extra_js %}{% endblock %}
 </body>
-</html> 
+</html>
